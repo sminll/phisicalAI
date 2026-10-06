@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoSort AI | AI 분리수거 도우미 스마트 쓰레기통</title>
+  <meta name="description" content="카메라와 AI로 쓰레기 종류를 인식하고 올바른 분리수거 위치를 안내하는 스마트 쓰레기통" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#top" class="logo" aria-label="EcoSort AI 홈">
+        <span class="logo__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M5 6l1.5 14h11L19 6"/><circle cx="12" cy="13" r="2.5"/></svg>
+        </span>
+        <span class="logo__text">EcoSort <b>AI</b></span>
+      </a>
+
+      <nav class="nav" id="nav" aria-label="주요 메뉴">
+        <a href="#problem" class="nav__link">문제 정의</a>
+        <a href="#how" class="nav__link">작동 방식</a>
+        <a href="#features" class="nav__link">주요 기능</a>
+        <a href="#kpi" class="nav__link">KPI</a>
+        <a href="#impact" class="nav__link">기대 효과</a>
+      </nav>
+
+      <a href="#kpi" class="btn btn--primary btn--sm header__cta">성과 지표 보기</a>
+
+      <button class="menu-toggle" id="menuToggle" aria-label="메뉴 열기" aria-expanded="false" aria-controls="nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+      <div class="container hero__inner">
+        <div class="hero__copy">
+          <span class="chip chip--primary"><i class="pulse"></i>PHYSICAL AI PROTOTYPE</span>
+          <h1 class="hero__title">버리는 순간,<br /><em>AI가 알려줍니다</em></h1>
+          <p class="hero__desc">
+            카메라 앞에 쓰레기를 보여주기만 하세요. 경량 AI가 <strong>페트병 · 캔 · 일반쓰레기</strong>를
+            2초 안에 판별하고, 올바른 투입구의 LED를 켜고 뚜껑을 자동으로 열어 안내합니다.
+            버튼 조작은 필요 없습니다.
+          </p>
+          <div class="hero__actions">
+            <a href="#how" class="btn btn--primary">작동 방식 보기</a>
+            <a href="#problem" class="btn btn--secondary">왜 필요한가요?</a>
+          </div>
+          <ul class="hero__stats">
+            <li><b>90%+</b><span>분류 정확도</span></li>
+            <li><b>≤ 2초</b><span>인식 속도</span></li>
+            <li><b>100%</b><span>오프라인 동작</span></li>
+          </ul>
+        </div>
+
+        <!-- Smart bin mockup -->
+        <div class="hero__visual" aria-label="스마트 쓰레기통 데모">
+          <div class="bin-demo">
+            <div class="cam-card">
+              <div class="cam-card__bar">
+                <span class="dot dot--live"></span> LIVE · CAM 01
+                <span class="cam-card__fps">ON-DEVICE</span>
+              </div>
+              <div class="cam-card__view">
+                <div class="bbox" id="bbox">
+                  <span class="bbox__tag" id="bboxTag">PET 96%</span>
+                  <span class="bbox__icon" id="bboxIcon">🧴</span>
+                </div>
+                <span class="corner corner--tl"></span><span class="corner corner--tr"></span>
+                <span class="corner corner--bl"></span><span class="corner corner--br"></span>
+              </div>
+              <div class="confidence">
+                <span>AI 신뢰도</span>
+                <div class="confidence__track"><div class="confidence__fill" id="confFill"></div></div>
+                <b id="confValue">96%</b>
+              </div>
+            </div>
+
+            <div class="bins">
+              <div class="bin bin--pet" data-bin="pet">
+                <div class="bin__lid"></div>
+                <div class="bin__led"></div>
+                <div class="bin__body"><span>페트병</span></div>
+              </div>
+              <div class="bin bin--can" data-bin="can">
+                <div class="bin__lid"></div>
+                <div class="bin__led"></div>
+                <div class="bin__body"><span>캔</span></div>
+              </div>
+              <div class="bin bin--gen" data-bin="gen">
+                <div class="bin__lid"></div>
+                <div class="bin__led"></div>
+                <div class="bin__body"><span>일반</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 문제 정의 ===== -->
+    <section class="section" id="problem">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">01 · 문제 정의</span>
+          <h2 class="section__title">분리수거함은 있는데, 왜 잘못 버려질까요?</h2>
+          <p class="section__desc">
+            사용자가 쓰레기 종류와 배출 기준을 <strong>직접 판단</strong>해야 하기 때문입니다.
+            기준을 모르거나 급할 때는 아무 칸에나 버리게 되고, 그 부담은 관리자와 환경으로 이어집니다.
+          </p>
+        </div>
+
+        <div class="grid grid--4">
+          <article class="card problem reveal">
+            <span class="problem__who">사용자</span>
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            </div>
+            <h3>기준을 모름</h3>
+            <p>라벨 붙은 페트병, 종이컵, 은박 포장재처럼 헷갈리는 쓰레기가 많아 잘못된 칸에 투입합니다.</p>
+          </article>
+          <article class="card problem reveal">
+            <span class="problem__who">사용자</span>
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <h3>판단이 귀찮음</h3>
+            <p>쉬는 시간처럼 바쁜 순간에는 고민할 여유가 없어 "일단 일반쓰레기"로 버리는 습관이 생깁니다.</p>
+          </article>
+          <article class="card problem reveal">
+            <span class="problem__who">관리자</span>
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+            </div>
+            <h3>재선별 부담</h3>
+            <p>혼입된 재활용품을 다시 골라내야 해서 선별 인력과 시간이 계속 늘어납니다.</p>
+          </article>
+          <article class="card problem reveal">
+            <span class="problem__who">환경</span>
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></svg>
+            </div>
+            <h3>재활용률 저하</h3>
+            <p>잘못 섞인 페트병과 캔은 재활용되지 못하고 소각·매립되어 자원이 낭비됩니다.</p>
+          </article>
+        </div>
+
+        <blockquote class="hypothesis reveal">
+          <span class="hypothesis__label">문제 가설</span>
+          <p>쓰레기를 버리는 <strong>그 순간</strong>에 무엇을 어디에 버려야 하는지 즉시 알려주면,
+          사용자는 별도의 학습 없이도 올바르게 분리배출할 것이다.</p>
+        </blockquote>
+      </div>
+    </section>
+
+    <!-- ===== 작동 방식 ===== -->
+    <section class="section section--tint" id="how">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">02 · 작동 방식</span>
+          <h2 class="section__title">보여주기만 하면, 2초 안에 안내합니다</h2>
+          <p class="section__desc">물체 감지부터 투입까지, 사용자는 아무 버튼도 누르지 않습니다.</p>
+        </div>
+
+        <ol class="steps">
+          <li class="step reveal">
+            <span class="step__num">1</span>
+            <h3>물체 감지</h3>
+            <p>근접 센서가 카메라 앞의 쓰레기를 감지합니다.</p>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">2</span>
+            <h3>촬영</h3>
+            <p>USB 카메라가 쓰레기 이미지를 촬영합니다.</p>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">3</span>
+            <h3>AI 추론</h3>
+            <p>경량 모델이 종류와 신뢰도를 산출합니다.</p>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">4</span>
+            <h3>LED · 뚜껑 안내</h3>
+            <p>올바른 투입구의 LED가 켜지고 뚜껑이 열립니다.</p>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">5</span>
+            <h3>투입 완료</h3>
+            <p>5초 후 뚜껑이 닫히고 대기 상태로 돌아갑니다.</p>
+          </li>
+        </ol>
+
+        <div class="arch card reveal">
+          <h3 class="arch__title">시스템 구성</h3>
+          <div class="arch__flow">
+            <div class="arch__node">
+              <span class="arch__kicker">INPUT</span>
+              <b>USB 카메라</b>
+              <small>720p 웹캠 · 초음파 센서</small>
+            </div>
+            <span class="arch__arrow" aria-hidden="true"></span>
+            <div class="arch__node arch__node--main">
+              <span class="arch__kicker">AI · PYTHON</span>
+              <b>Raspberry Pi 4</b>
+              <small>YOLOv8n / MobileNetV3 · TFLite</small>
+            </div>
+            <span class="arch__arrow" aria-hidden="true"></span>
+            <div class="arch__node">
+              <span class="arch__kicker">CONTROL · SERIAL</span>
+              <b>Arduino Uno</b>
+              <small>LED · 서보 제어 펌웨어</small>
+            </div>
+            <span class="arch__arrow" aria-hidden="true"></span>
+            <div class="arch__node">
+              <span class="arch__kicker">OUTPUT</span>
+              <b>LED · 서보모터</b>
+              <small>RGB LED 3 · SG90 3</small>
+            </div>
+          </div>
+          <p class="arch__note">
+            <span class="chip chip--amber">예외 처리</span>
+            신뢰도 0.7 미만이면 노란 LED로 재시도를 안내하고, 2회 실패 시 일반쓰레기 투입구를 안내합니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 주요 기능 ===== -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">03 · 주요 기능</span>
+          <h2 class="section__title">작고 저렴하지만, 필요한 건 다 합니다</h2>
+        </div>
+
+        <div class="grid grid--3">
+          <article class="card feature reveal">
+            <div class="icon-box icon-box--primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1a3 3 0 0 1 3 3v1a3 3 0 0 1-1 2.2V15a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4v-1.8A3 3 0 0 1 5 11v-1a3 3 0 0 1 3-3V6a4 4 0 0 1 4-4z"/><path d="M9 12h.01M15 12h.01"/></svg>
+            </div>
+            <h3>AI 3종 분류</h3>
+            <p>페트병 · 캔 · 일반쓰레기를 신뢰도와 함께 판별합니다.</p>
+            <div class="tags">
+              <span class="tag tag--pet">PET</span><span class="tag tag--can">CAN</span><span class="tag tag--gen">GENERAL</span>
+            </div>
+          </article>
+          <article class="card feature reveal">
+            <div class="icon-box icon-box--primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><path d="M5 10l1.5 10h11L19 10"/><path d="M4 7l14-4"/></svg>
+            </div>
+            <h3>자동 뚜껑 개폐</h3>
+            <p>서보모터가 해당 투입구의 뚜껑만 열고, 5초 후 자동으로 닫습니다.</p>
+          </article>
+          <article class="card feature reveal">
+            <div class="icon-box icon-box--primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+            </div>
+            <h3>LED 색상 안내</h3>
+            <p>언어 없이도 이해되는 불빛 안내로 외국인 방문객도 쉽게 사용합니다.</p>
+          </article>
+          <article class="card feature reveal">
+            <div class="icon-box icon-box--primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            </div>
+            <h3>재시도 · 예외 처리</h3>
+            <p>낮은 신뢰도, 여러 물체 동시 인식 등 예외 상황에서도 안전하게 동작합니다.</p>
+          </article>
+          <article class="card feature reveal">
+            <div class="icon-box icon-box--primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+            </div>
+            <h3>오프라인 온디바이스 AI</h3>
+            <p>인터넷 없이 Raspberry Pi에서 직접 추론합니다. 10MB 이하 경량 모델.</p>
+          </article>
+          <article class="card feature reveal">
+            <div class="icon-box icon-box--primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <h3>프라이버시 보호</h3>
+            <p>영상과 이미지는 저장하지 않고, 분류 결과 텍스트 로그만 기록합니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== KPI ===== -->
+    <section class="section section--tint" id="kpi">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">04 · 성공 지표 (KPI)</span>
+          <h2 class="section__title">숫자로 검증하는 프로토타입</h2>
+          <p class="section__desc">핵심 KPI는 테스트 샘플과 반복 시험으로, 효과 KPI는 시범 운영으로 측정합니다.</p>
+        </div>
+
+        <div class="grid grid--3 kpi-grid">
+          <article class="card kpi reveal">
+            <div class="kpi__top"><span class="kpi__label">분류 정확도</span><span class="chip chip--primary">핵심</span></div>
+            <div class="kpi__value"><span class="count" data-target="90">0</span><small>% 이상</small></div>
+            <div class="bar"><div class="bar__fill" data-fill="90"></div></div>
+            <p class="kpi__how">클래스별 30개+, 총 100개 이상 샘플 정답률 · 클래스별 최저 85%</p>
+          </article>
+
+          <article class="card kpi reveal">
+            <div class="kpi__top"><span class="kpi__label">인식 속도</span><span class="chip chip--primary">핵심</span></div>
+            <div class="kpi__value"><small>≤</small><span class="count" data-target="2">0</span><small>초</small></div>
+            <div class="bar"><div class="bar__fill" data-fill="100"></div></div>
+            <p class="kpi__how">촬영 → LED 점등까지 로그 측정 · 평균 및 95백분위</p>
+          </article>
+
+          <article class="card kpi reveal">
+            <div class="kpi__top"><span class="kpi__label">분류 대상</span><span class="chip chip--primary">핵심</span></div>
+            <div class="kpi__value"><span class="count" data-target="3">0</span><small>종 이상</small></div>
+            <div class="seg">
+              <span class="seg__item seg__item--pet">페트병</span>
+              <span class="seg__item seg__item--can">캔</span>
+              <span class="seg__item seg__item--gen">일반</span>
+            </div>
+            <p class="kpi__how">지원 클래스 수 · 추후 종이 · 비닐 · 유리로 확장</p>
+          </article>
+
+          <article class="card kpi reveal">
+            <div class="kpi__top"><span class="kpi__label">장치 동작 성공률</span><span class="chip chip--primary">핵심</span></div>
+            <div class="kpi__value"><span class="count" data-target="95">0</span><small>% 이상</small></div>
+            <div class="bar"><div class="bar__fill" data-fill="95"></div></div>
+            <p class="kpi__how">LED · 서보 100회 반복 시험 중 정상 동작 비율</p>
+          </article>
+
+          <article class="card kpi reveal">
+            <div class="kpi__top"><span class="kpi__label">버튼 조작</span><span class="chip chip--primary">핵심</span></div>
+            <div class="kpi__value"><span class="count" data-target="0">0</span><small>회</small></div>
+            <div class="bar bar--empty"><span>Zero-touch · 보여주기만 하면 끝</span></div>
+            <p class="kpi__how">사용 테스트 관찰 · 첫 사용 성공률 80% 이상</p>
+          </article>
+
+          <article class="card kpi kpi--accent reveal">
+            <div class="kpi__top"><span class="kpi__label">잘못된 분리배출</span><span class="chip chip--blue">효과</span></div>
+            <div class="kpi__value"><span class="count" data-target="50">0</span><small>% 감소</small></div>
+            <div class="compare">
+              <div class="compare__row"><span>설치 전</span><div class="compare__bar"><i data-fill="100"></i></div></div>
+              <div class="compare__row"><span>설치 후</span><div class="compare__bar compare__bar--after"><i data-fill="50"></i></div></div>
+            </div>
+            <p class="kpi__how">설치 전/후 1주일 투입물 샘플 검사 · 만족도 4.0/5 이상</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 기대 효과 ===== -->
+    <section class="section" id="impact">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">05 · 기대 효과</span>
+          <h2 class="section__title">작은 쓰레기통이 만드는 큰 변화</h2>
+        </div>
+
+        <div class="impact">
+          <div class="grid grid--2 impact__cards">
+            <article class="card benefit reveal">
+              <span class="benefit__tag">환경</span>
+              <h3>재활용률 향상</h3>
+              <p>혼입률이 줄어 페트병과 캔이 실제로 재활용되는 비율이 높아집니다.</p>
+            </article>
+            <article class="card benefit reveal">
+              <span class="benefit__tag">운영</span>
+              <h3>재선별 시간 감소</h3>
+              <p>혼입률 50% 감소 시 관리자의 재선별 작업 시간도 그만큼 줄어듭니다.</p>
+            </article>
+            <article class="card benefit reveal">
+              <span class="benefit__tag">교육</span>
+              <h3>분리배출 습관 형성</h3>
+              <p>버릴 때마다 올바른 분류를 보여주어 자연스럽게 기준을 익힙니다.</p>
+            </article>
+            <article class="card benefit reveal">
+              <span class="benefit__tag">확장성</span>
+              <h3>쉬운 복제 설치</h3>
+              <p>저비용 · 오프라인 구조로 교실, 복도, 공공장소 어디에나 설치할 수 있습니다.</p>
+            </article>
+          </div>
+
+          <aside class="cost card reveal">
+            <span class="eyebrow eyebrow--light">프로토타입 1대 예상 비용</span>
+            <div class="cost__total">약 <b>10</b>만 원 이내</div>
+            <ul class="cost__list">
+              <li><span>Raspberry Pi 4 + 전원 + SD</span><b>60,000</b></li>
+              <li><span>USB 웹캠</span><b>15,000</b></li>
+              <li><span>Arduino Uno (호환)</span><b>8,000</b></li>
+              <li><span>SG90 서보모터 × 3</span><b>6,000</b></li>
+              <li><span>센서 · 외함 재료</span><b>6,000</b></li>
+              <li><span>LED · 저항 · 배선</span><b>5,000</b></li>
+            </ul>
+            <p class="cost__note">기존 키트 활용 시 약 3~4만 원 수준</p>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <a href="#top" class="logo logo--light">
+          <span class="logo__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M5 6l1.5 14h11L19 6"/><circle cx="12" cy="13" r="2.5"/></svg>
+          </span>
+          <span class="logo__text">EcoSort <b>AI</b></span>
+        </a>
+        <p class="footer__desc">AI 분리수거 도우미 스마트 쓰레기통 · 피지컬 AI 프로토타입</p>
+      </div>
+      <p class="footer__meta">작성자 이수민 · PRD v0.2 · © 2026</p>
+    </div>
+  </footer>
+
+  <button class="to-top" id="toTop" aria-label="맨 위로">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>
