@@ -24,6 +24,7 @@
       <nav class="nav" id="nav" aria-label="주요 메뉴">
         <a href="#problem" class="nav__link">문제 정의</a>
         <a href="#how" class="nav__link">작동 방식</a>
+        <a href="#data" class="nav__link">데이터 처리</a>
         <a href="#features" class="nav__link">주요 기능</a>
         <a href="#kpi" class="nav__link">KPI</a>
         <a href="#impact" class="nav__link">기대 효과</a>
@@ -209,7 +210,7 @@
             <div class="arch__node arch__node--main">
               <span class="arch__kicker">AI · PYTHON</span>
               <b>Raspberry Pi 4</b>
-              <small>YOLOv8n / MobileNetV3 · TFLite</small>
+              <small>MobileNetV3-Small · TFLite INT8</small>
             </div>
             <span class="arch__arrow" aria-hidden="true"></span>
             <div class="arch__node">
@@ -232,11 +233,105 @@
       </div>
     </section>
 
+    <!-- ===== 데이터 처리 (전처리 · 후처리) ===== -->
+    <section class="section section--dark" id="data">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">03 · 데이터 처리</span>
+          <h2 class="section__title">AI가 보기 전에 다듬고, 본 뒤에 한 번 더 확인합니다</h2>
+          <p class="section__desc">
+            설치 후보 장소(본관 2층 매점 옆 창가)를 현장 조사해 보니 오후 역광, 늘 함께 찍히는 손, 부족한 캔 데이터가
+            정확도를 위협했습니다. 그래서 사진을 모델에 넣기 전의 <strong>전처리 11단계</strong>와, 모델의 답을 그대로 믿지 않는
+            <strong>후처리 판단 규칙</strong>을 설계했습니다.
+          </p>
+        </div>
+
+        <!-- 전처리 탐색기 -->
+        <div class="pipe card reveal">
+          <div class="pipe__top">
+            <div class="pipe-tabs" role="tablist" aria-label="전처리 단계 묶음">
+              <button class="pipe-tabs__btn is-active" type="button" role="tab" aria-selected="true" aria-controls="pipeTrack" data-group="clean">학습 데이터 정제 <span>1–5</span></button>
+              <button class="pipe-tabs__btn" type="button" role="tab" aria-selected="false" aria-controls="pipeTrack" data-group="input">모델 입력 처리 <span>6–11</span></button>
+            </div>
+            <p class="pipe__legend">
+              <span class="scope scope--train">학습</span> 학습할 때만
+              <span class="scope scope--both">공통</span> 학습과 실시간 추론에 같은 코드로 적용
+            </p>
+          </div>
+          <ol class="pipe-track" id="pipeTrack" aria-label="전처리 단계 (눌러서 자세히 보기)"></ol>
+          <div class="pipe-detail" id="pipePanel" aria-live="polite"></div>
+        </div>
+
+        <!-- 후처리 -->
+        <div class="post reveal">
+          <div class="post__intro">
+            <h3>후처리: 모델의 답을 바로 믿지 않습니다</h3>
+            <p>
+              추론이 끝나면 판단 규칙을 위에서부터 차례로 확인합니다. 걸리는 항목이 있으면 노란 LED로
+              다시 보여달라고 안내하고, 최대 2번까지 다시 찍습니다.
+            </p>
+            <h4 class="post__sub">실시간 처리 순서</h4>
+            <ol class="post__flow">
+              <li>초음파 센서가 물체 접근을 감지</li>
+              <li>카메라에 남은 오래된 프레임 3장을 버림</li>
+              <li>5장을 연속 촬영해 가장 선명한 1장만 선택</li>
+              <li>공통 전처리(6·7·8·11) 후 INT8 모델로 추론</li>
+              <li>원본 사진은 즉시 메모리에서 삭제</li>
+              <li>판단 규칙 적용 후 결과만 텍스트로 기록</li>
+            </ol>
+          </div>
+
+          <ol class="ladder" aria-label="후처리 판단 규칙">
+            <li class="ladder__item">
+              <span class="ladder__q">1</span>
+              <div>
+                <b>'물체 없음'으로 나왔나요?</b>
+                <p>지나가는 사람에게 센서가 반응한 경우입니다. 다시 찍고, 3번 모두 비어 있으면 뚜껑을 열지 않습니다.</p>
+              </div>
+              <span class="out out--cancel">취소</span>
+            </li>
+            <li class="ladder__item">
+              <span class="ladder__q">2</span>
+              <div>
+                <b>흔들려서 흐린가요?</b>
+                <p>쓰레기를 던지듯 보여주면 선명도가 기준 미만으로 떨어집니다. 흐린 사진의 답은 쓰지 않습니다.</p>
+              </div>
+              <span class="out out--retry">다시 보여주세요</span>
+            </li>
+            <li class="ladder__item">
+              <span class="ladder__q">3</span>
+              <div>
+                <b>신뢰도가 0.7보다 낮은가요?</b>
+                <p>플라스틱 컵, 은박 봉지처럼 헷갈리는 물체에서 자주 생깁니다. 확신이 없으면 다시 확인합니다.</p>
+              </div>
+              <span class="out out--retry">다시 보여주세요</span>
+            </li>
+            <li class="ladder__item ladder__item--pass">
+              <span class="ladder__q" aria-hidden="true">✓</span>
+              <div>
+                <b>모두 통과</b>
+                <p>판별한 투입구의 LED가 켜지고 뚜껑이 열립니다.</p>
+              </div>
+              <span class="out out--go">투입구 안내</span>
+            </li>
+            <li class="ladder__item ladder__item--fallback">
+              <span class="ladder__q" aria-hidden="true">!</span>
+              <div>
+                <b>2번 다시 찍어도 판별 실패</b>
+                <p>재활용 칸이 오염되지 않도록 일반쓰레기 투입구를 안내합니다. 잘못 섞이는 쪽보다 안전한 선택입니다.</p>
+              </div>
+              <span class="out out--gen">일반쓰레기</span>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== 주요 기능 ===== -->
     <section class="section" id="features">
       <div class="container">
         <div class="section__head reveal">
-          <span class="eyebrow">03 · 주요 기능</span>
+          <span class="eyebrow">04 · 주요 기능</span>
           <h2 class="section__title">작고 저렴하지만, 필요한 건 다 합니다</h2>
         </div>
 
@@ -294,7 +389,7 @@
     <section class="section section--tint" id="kpi">
       <div class="container">
         <div class="section__head reveal">
-          <span class="eyebrow">04 · 성공 지표 (KPI)</span>
+          <span class="eyebrow">05 · 성공 지표 (KPI)</span>
           <h2 class="section__title">숫자로 검증하는 프로토타입</h2>
           <p class="section__desc">핵심 KPI는 테스트 샘플과 반복 시험으로, 효과 KPI는 시범 운영으로 측정합니다.</p>
         </div>
@@ -356,7 +451,7 @@
     <section class="section" id="impact">
       <div class="container">
         <div class="section__head reveal">
-          <span class="eyebrow">05 · 기대 효과</span>
+          <span class="eyebrow">06 · 기대 효과</span>
           <h2 class="section__title">작은 쓰레기통이 만드는 큰 변화</h2>
         </div>
 
@@ -414,7 +509,7 @@
         </a>
         <p class="footer__desc">AI 분리수거 도우미 스마트 쓰레기통 · 피지컬 AI 프로토타입</p>
       </div>
-      <p class="footer__meta">작성자 이수민 · PRD v0.2 · © 2026</p>
+      <p class="footer__meta">작성자 이수민 · PRD v0.3 · © 2026</p>
     </div>
   </footer>
 
