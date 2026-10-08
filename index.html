@@ -25,6 +25,7 @@
         <a href="#problem" class="nav__link">문제 정의</a>
         <a href="#how" class="nav__link">작동 방식</a>
         <a href="#data" class="nav__link">데이터 처리</a>
+        <a href="#model" class="nav__link">AI 모델</a>
         <a href="#features" class="nav__link">주요 기능</a>
         <a href="#kpi" class="nav__link">KPI</a>
         <a href="#impact" class="nav__link">기대 효과</a>
@@ -210,7 +211,7 @@
             <div class="arch__node arch__node--main">
               <span class="arch__kicker">AI · PYTHON</span>
               <b>Raspberry Pi 4</b>
-              <small>MobileNetV3-Small · TFLite INT8</small>
+              <small>YOLO26n 검출 · NCNN</small>
             </div>
             <span class="arch__arrow" aria-hidden="true"></span>
             <div class="arch__node">
@@ -275,7 +276,7 @@
               <li>초음파 센서가 물체 접근을 감지</li>
               <li>카메라에 남은 오래된 프레임 3장을 버림</li>
               <li>5장을 연속 촬영해 가장 선명한 1장만 선택</li>
-              <li>공통 전처리(6·7·8·11) 후 INT8 모델로 추론</li>
+              <li>ROI 크롭 후 YOLO26n으로 쓰레기 위치와 종류를 검출</li>
               <li>원본 사진은 즉시 메모리에서 삭제</li>
               <li>판단 규칙 적용 후 결과만 텍스트로 기록</li>
             </ol>
@@ -285,13 +286,21 @@
             <li class="ladder__item">
               <span class="ladder__q">1</span>
               <div>
-                <b>'물체 없음'으로 나왔나요?</b>
-                <p>지나가는 사람에게 센서가 반응한 경우입니다. 다시 찍고, 3번 모두 비어 있으면 뚜껑을 열지 않습니다.</p>
+                <b>아무것도 잡히지 않았나요?</b>
+                <p>박스가 0개면 지나가는 사람에게 센서가 반응한 경우입니다. 다시 찍고, 3번 모두 비어 있으면 뚜껑을 열지 않습니다.</p>
               </div>
               <span class="out out--cancel">취소</span>
             </li>
             <li class="ladder__item">
               <span class="ladder__q">2</span>
+              <div>
+                <b>2개 이상 잡혔나요?</b>
+                <p>친구 것까지 한꺼번에 들고 오는 경우입니다. 칸이 서로 다를 수 있으니 하나씩 보여달라고 안내합니다.</p>
+              </div>
+              <span class="out out--retry">하나씩 보여주세요</span>
+            </li>
+            <li class="ladder__item">
+              <span class="ladder__q">3</span>
               <div>
                 <b>흔들려서 흐린가요?</b>
                 <p>쓰레기를 던지듯 보여주면 선명도가 기준 미만으로 떨어집니다. 흐린 사진의 답은 쓰지 않습니다.</p>
@@ -299,7 +308,7 @@
               <span class="out out--retry">다시 보여주세요</span>
             </li>
             <li class="ladder__item">
-              <span class="ladder__q">3</span>
+              <span class="ladder__q">4</span>
               <div>
                 <b>신뢰도가 0.7보다 낮은가요?</b>
                 <p>플라스틱 컵, 은박 봉지처럼 헷갈리는 물체에서 자주 생깁니다. 확신이 없으면 다시 확인합니다.</p>
@@ -327,11 +336,182 @@
       </div>
     </section>
 
+    <!-- ===== AI 모델 (YOLO) ===== -->
+    <section class="section section--tint" id="model">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">04 · AI 모델</span>
+          <h2 class="section__title">수많은 YOLO 중에 YOLO26n을 고른 이유</h2>
+          <p class="section__desc">
+            YOLO는 버전, 크기, 작업 종류로 나뉘고, 모델 이름에 세 가지가 모두 들어 있습니다.
+            라즈베리파이에서 2초 안에 답하고, 여러 개를 한꺼번에 보여줘도 구분할 수 있는 조합을 골랐습니다.
+          </p>
+        </div>
+
+        <!-- 이름 읽는 법 -->
+        <div class="mname card reveal">
+          <p class="mname__word" aria-label="yolo26n: 26세대, nano 크기, 검출용">
+            <span class="mname__base">yolo</span><span class="mname__ver">26</span><span class="mname__size">n</span><span class="mname__task" aria-hidden="true"></span>
+          </p>
+          <dl class="mname__parts">
+            <div class="mname__part mname__part--ver">
+              <dt>버전 26</dt>
+              <dd>Ultralytics의 최신 세대입니다. 겹친 박스를 지우는 후처리(NMS) 없이 물체당 박스 하나를 내고, 작은 장치의 CPU에서 빠르게 돌도록 설계됐습니다.</dd>
+            </div>
+            <div class="mname__part mname__part--size">
+              <dt>크기 n (nano)</dt>
+              <dd>5단계 중 가장 작고 빠른 모델입니다. GPU가 없는 라즈베리파이 4에서도 2초 목표를 맞출 수 있습니다.</dd>
+            </div>
+            <div class="mname__part mname__part--task">
+              <dt>작업: 검출 (빈칸)</dt>
+              <dd>이름 끝에 아무것도 없으면 물체마다 박스를 치는 검출용입니다. -cls는 분류, -seg는 분할, -pose는 자세 추정입니다.</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="model-grid">
+          <!-- 크기 비교 -->
+          <div class="sizes card reveal">
+            <h3>크기 5단계 비교</h3>
+            <p>눌러서 비교해 보세요. 클수록 정확하지만 느려집니다.</p>
+            <div class="sizes__tabs" role="group" aria-label="모델 크기 선택" id="sizeTabs"></div>
+            <div class="sizes__body" id="sizeBody" aria-live="polite"></div>
+            <p class="sizes__note">상대 비교입니다. 실제 수치는 Ultralytics 공식 문서와 라즈베리파이 실측으로 확인합니다.</p>
+          </div>
+
+          <!-- 분류 vs 검출 -->
+          <div class="task card reveal">
+            <h3>왜 분류가 아니라 검출인가</h3>
+            <p>현장 조사에서 쓰레기 2~3개를 한꺼번에 보여주는 경우가 15분에 5번 있었습니다.</p>
+            <div class="task__cmp">
+              <figure class="task__case">
+                <div class="task__frame">
+                  <span class="task__obj">🥫</span><span class="task__obj">🧴</span>
+                  <span class="task__label task__label--cls">캔 0.52</span>
+                </div>
+                <figcaption><b>분류 (yolo26n-cls)</b> 사진 한 장에 답 하나. 두 개를 들어도 하나만 말하고, 빈 화면도 따로 학습시켜야 합니다.</figcaption>
+              </figure>
+              <figure class="task__case task__case--pick">
+                <div class="task__frame">
+                  <span class="task__obj task__obj--box" style="--c: var(--can)">🥫<i>캔</i></span><span class="task__obj task__obj--box" style="--c: var(--pet)">🧴<i>페트</i></span>
+                </div>
+                <figcaption><b>검출 (yolo26n) · 선택</b> 물체마다 박스. 2개면 "하나씩 보여주세요", 0개면 물체 없음으로 바로 판단합니다.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+
+        <!-- 사전학습 -->
+        <div class="pre reveal">
+          <div class="pre__lead">
+            <h3>처음부터 가르치지 않고, 사전학습 모델에서 시작합니다</h3>
+            <p>COCO 데이터셋으로 미리 학습된 <code>yolo26n.pt</code>에서 출발해, 우리 쓰레기 사진으로 다시 학습하는 전이학습 방식입니다.</p>
+          </div>
+          <ul class="pre__list">
+            <li><b>데이터가 적습니다</b><span>클래스당 수백 장으로는 모서리·곡면·반사광 같은 기본 특징부터 배울 수 없어 과적합됩니다.</span></li>
+            <li><b>이미 병과 컵을 압니다</b><span>COCO에 bottle, cup이 있어 페트병과 플라스틱 컵의 모양을 어느 정도 알고 시작합니다.</span></li>
+            <li><b>무료 GPU로 충분합니다</b><span>수십 에폭 안에 수렴해 Google Colab에서 학습할 수 있습니다. 사전학습 없이 학습한 모델과도 비교해 효과를 확인합니다.</span></li>
+          </ul>
+        </div>
+
+        <!-- 학습 · 검증 흐름 -->
+        <div class="train card reveal">
+          <h3>학습과 검증 순서</h3>
+          <ol class="train__flow">
+            <li><b>정제 · 분할</b><span>얼굴·흐림·중복 제거, 날짜·시간대 단위로 학습/검증/시험 분할</span></li>
+            <li><b>박스 라벨링</b><span>pet · can · general 3종, 손 제외하고 쓰레기만. 빈 배경 사진 10% 포함</span></li>
+            <li><b>Colab 학습</b><span>입력 320, 최대 100에폭, 20에폭 동안 개선 없으면 자동 종료</span></li>
+            <li><b>결과표 해석</b><span>검증 데이터로 mAP50과 클래스별 정밀도·재현율 확인</span></li>
+            <li><b>제품 기준 시험</b><span>시험 데이터에 실제 판단 규칙을 적용해 안내 정확도 계산 (마지막 1회)</span></li>
+            <li><b>라즈베리파이 실측</b><span>NCNN으로 변환 후 정확도 하락과 응답 시간 100회 측정</span></li>
+          </ol>
+          <pre class="train__code"><code>yolo detect train model=yolo26n.pt data=data.yaml imgsz=320 epochs=100 patience=20 \
+  hsv_s=0.3 hsv_v=0.3 degrees=30 flipud=0.5 fliplr=0.5 scale=0.3 close_mosaic=10</code></pre>
+        </div>
+
+        <!-- 합격 기준 -->
+        <div class="pass card reveal">
+          <div class="pass__head">
+            <h3>합격 기준</h3>
+            <p>아래 기준을 모두 넘어야 모델을 확정합니다. 넘지 못하면 아래 진단표로 원인을 찾아 고친 뒤 다시 학습합니다.</p>
+          </div>
+          <ul class="pass__list">
+            <li><b>90%<small>이상</small></b><span>전체 안내 정확도</span><em>시험 데이터에 실제 판단 규칙 적용</em></li>
+            <li><b>85%<small>이상</small></b><span>클래스별 최저 정확도</span><em>데이터가 가장 적은 캔 포함</em></li>
+            <li><b>2초<small>이내</small></b><span>감지부터 안내까지</span><em>라즈베리파이 100회 측정, 95백분위</em></li>
+            <li><b>1%<small>이하</small></b><span>빈 화면 오감지</span><em>쓰레기 없이 뚜껑이 열린 비율</em></li>
+            <li><b>2%p<small>이내</small></b><span>변환 후 정확도 하락</span><em>NCNN 변환 전후 비교</em></li>
+            <li><b>10MB<small>이하</small></b><span>모델 파일 크기</span><em>라즈베리파이 저장·실행 조건</em></li>
+          </ul>
+        </div>
+
+        <!-- 결과표 읽기 -->
+        <div class="eval reveal">
+          <div class="eval__table card">
+            <div class="eval__top">
+              <h3>검증 결과표</h3>
+              <span class="chip chip--amber">학습 후 공개</span>
+            </div>
+            <div class="eval__scroll">
+              <table>
+                <thead>
+                  <tr><th>Class</th><th>Images</th><th>Instances</th><th class="is-key">P</th><th class="is-key">R</th><th class="is-key">mAP50</th><th class="is-dim">mAP50-95</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>all</td><td>—</td><td>—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-dim">—</td></tr>
+                  <tr><td><span class="tag tag--pet">pet</span></td><td>—</td><td>—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-dim">—</td></tr>
+                  <tr><td><span class="tag tag--can">can</span></td><td>—</td><td>—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-dim">—</td></tr>
+                  <tr><td><span class="tag tag--gen">general</span></td><td>—</td><td>—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-key">—</td><td class="is-dim">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="eval__note">
+              <b>정밀도(P)</b> 찾았다고 한 것 중 맞은 비율 · <b>재현율(R)</b> 실제 쓰레기 중 찾아낸 비율 ·
+              <b>mAP50</b> 박스가 절반 이상 겹치면 정답으로 보고 낸 평균 점수.
+              이 제품은 박스를 정밀하게 그릴 필요 없이 종류와 개수만 맞으면 되므로 mAP50과 클래스별 P·R을 주요 지표로 보고,
+              mAP50-95는 참고로만 기록합니다. 결과표는 신뢰도 기준을 거의 0으로 두고 계산하므로, 실제 제품이 쓰는 0.7에서의 P·R은 따로 확인합니다.
+            </p>
+          </div>
+
+          <div class="eval__diag">
+            <h3>결과에 따른 진단과 조치</h3>
+            <ul class="diag">
+              <li class="diag__item">
+                <span class="diag__sign">P 높음 · R 낮음</span>
+                <b>확실한 것만 답하고 많이 놓침</b>
+                <p>재시도 안내가 잦아집니다. 신뢰도 기준을 낮춰보고, 손에 가려진 캔처럼 놓친 유형의 사진을 추가합니다.</p>
+              </li>
+              <li class="diag__item">
+                <span class="diag__sign">P 낮음 · R 높음</span>
+                <b>헛탐지가 많음</b>
+                <p>빈 배경에도 뚜껑이 열립니다. 기준을 올리고 빈 배경·손만 있는 사진을 추가합니다. 캔만 낮으면 은박 봉지 사진을 늘립니다.</p>
+              </li>
+              <li class="diag__item">
+                <span class="diag__sign">mAP50 높음 · 50-95 낮음</span>
+                <b>찾긴 하는데 박스가 대충</b>
+                <p>이 제품엔 영향이 작습니다. 손 포함 여부처럼 라벨 기준이 사람마다 달랐는지만 점검합니다.</p>
+              </li>
+              <li class="diag__item">
+                <span class="diag__sign">전부 낮음</span>
+                <b>아직 덜 배움</b>
+                <p>에폭을 늘리고, 데이터 양과 잘못 붙은 라벨을 점검합니다.</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="license-note reveal">
+          <span class="chip chip--amber">라이선스</span>
+          Ultralytics YOLO는 AGPL-3.0입니다. 학교 프로젝트로 코드를 공개해 쓰는 것은 문제없지만, 제품으로 판매하려면 별도 라이선스가 필요합니다.
+        </p>
+      </div>
+    </section>
+
     <!-- ===== 주요 기능 ===== -->
     <section class="section" id="features">
       <div class="container">
         <div class="section__head reveal">
-          <span class="eyebrow">04 · 주요 기능</span>
+          <span class="eyebrow">05 · 주요 기능</span>
           <h2 class="section__title">작고 저렴하지만, 필요한 건 다 합니다</h2>
         </div>
 
@@ -389,7 +569,7 @@
     <section class="section section--tint" id="kpi">
       <div class="container">
         <div class="section__head reveal">
-          <span class="eyebrow">05 · 성공 지표 (KPI)</span>
+          <span class="eyebrow">06 · 성공 지표 (KPI)</span>
           <h2 class="section__title">숫자로 검증하는 프로토타입</h2>
           <p class="section__desc">핵심 KPI는 테스트 샘플과 반복 시험으로, 효과 KPI는 시범 운영으로 측정합니다.</p>
         </div>
@@ -451,7 +631,7 @@
     <section class="section" id="impact">
       <div class="container">
         <div class="section__head reveal">
-          <span class="eyebrow">06 · 기대 효과</span>
+          <span class="eyebrow">07 · 기대 효과</span>
           <h2 class="section__title">작은 쓰레기통이 만드는 큰 변화</h2>
         </div>
 

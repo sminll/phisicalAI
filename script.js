@@ -180,9 +180,9 @@
       },
       {
         n: 7, name: "리사이즈", scope: "both",
-        why: "Raspberry Pi 4에서 2초 안에 안내를 끝내려면 모델 입력이 작아야 합니다.",
-        how: "<code>224×224</code>로 줄이고, 축소에 유리한 INTER_AREA 방식을 씁니다.",
-        order: "필요한 영역을 자른 다음에 줄입니다.",
+        why: "Raspberry Pi 4에서 2초 안에 안내를 끝내려면 모델 입력이 작아야 합니다. 쓰레기가 화면에 크게 찍혀 작게 줄여도 충분합니다.",
+        how: "YOLO가 비율을 유지한 채 회색 여백을 붙여 <code>320×320</code>으로 맞춥니다(letterbox). 직접 줄이지 않습니다.",
+        order: "필요한 영역을 자른 다음에 줄입니다. 추론도 같은 YOLO 방식으로 처리해야 입력이 어긋나지 않습니다.",
       },
       {
         n: 8, name: "대비 보정 (CLAHE)", scope: "both",
@@ -192,21 +192,21 @@
       },
       {
         n: 9, name: "데이터 증강", scope: "train",
-        why: "시간대별 조명, 찌그러진 병과 캔, 손 가림, 빠른 동작, 제각각인 놓는 방향을 견디게 합니다.",
-        how: "밝기·대비 <code>±30%</code>, 회전 <code>90°</code> 단위와 <code>±30°</code>, 모션 블러, 사진의 <code>9~15%</code> 가리기 등을 무작위로 섞습니다.",
-        order: "학습용 데이터에만, 정규화 전 0~255 이미지에 적용합니다.",
+        why: "시간대별 조명, 찌그러진 병과 캔, 제각각인 놓는 방향, 여러 개를 함께 든 상황을 견디게 합니다.",
+        how: "YOLO 학습 설정으로 색 변화 <code>0.3</code>, 회전 <code>±30°</code>, 상하·좌우 뒤집기, 크기 <code>±30%</code>, 사진 4장을 이어 붙이는 모자이크를 적용합니다.",
+        order: "학습용 데이터에만, 학습 중에 매번 무작위로 적용합니다. 모자이크는 마지막 10에폭에서 끕니다.",
       },
       {
         n: 10, name: "클래스 균형", scope: "train",
         why: "캔이 전체의 15%로 가장 적어 캔만 정확도 기준(85%)을 못 넘길 위험이 큽니다.",
-        how: "적은 칸일수록 학습 가중치를 크게 주고, 찌그러진 캔을 포함해 실물 <code>300장</code> 이상을 더 찍습니다.",
+        how: "YOLO 검출 학습에는 클래스 가중치 옵션이 없어, 찌그러진 캔을 포함한 실물 사진을 <code>300장</code> 이상 더 찍어 해결합니다.",
         order: "학습용 데이터에만 적용합니다.",
       },
       {
         n: 11, name: "정규화", scope: "both",
-        why: "사전학습된 MobileNetV3가 기대하는 입력 범위와 맞춰야 합니다.",
-        how: "모델 안에 전처리 층이 있어 <code>0~255</code> 값을 그대로 넣습니다. 따로 255로 나누면 이중 정규화가 됩니다.",
-        order: "맨 마지막입니다. 학습과 실시간 추론이 같은 코드로 처리해 입력이 어긋나지 않습니다.",
+        why: "사전학습된 YOLO26n이 기대하는 입력 범위와 맞춰야 합니다.",
+        how: "YOLO가 내부에서 픽셀 값을 <code>0~1</code>로 나눕니다. 직접 나누면 이중 정규화가 되고, 색 순서(BGR)도 YOLO가 알아서 처리합니다.",
+        order: "맨 마지막입니다. 학습과 실시간 추론이 같은 YOLO 처리를 거쳐 입력이 어긋나지 않습니다.",
       },
     ],
   };
@@ -272,4 +272,49 @@
 
   renderTrack();
   select(current);
+})();
+
+// ----- AI 모델: 크기 5단계 비교 -----
+(() => {
+  const tabs = document.getElementById("sizeTabs");
+  const body = document.getElementById("sizeBody");
+  if (!tabs || !body) return;
+
+  // 속도·정확도는 5단계 상대 비교 (실제 수치 아님)
+  const SIZES = [
+    { k: "n", name: "nano", speed: 5, acc: 1, use: "Raspberry Pi, 스마트폰처럼 GPU가 없거나 약한 소형 장치", ours: true,
+      note: "이 제품의 기본 모델입니다. 쓰레기가 크게 찍히고 클래스가 3개뿐이라 nano로도 충분할 것으로 봅니다." },
+    { k: "s", name: "small", speed: 4, acc: 2, use: "nano의 정확도가 부족한 소형 장치, 노트북 CPU",
+      note: "nano가 정확도 기준을 못 넘으면 비교할 후보입니다 (비교 실험 C)." },
+    { k: "m", name: "medium", speed: 3, acc: 3, use: "Jetson 같은 GPU 탑재 엣지 장치, 일반 PC GPU",
+      note: "정확도와 속도의 균형형입니다. 라즈베리파이 CPU에서는 2초 목표를 맞추기 어렵습니다." },
+    { k: "l", name: "large", speed: 2, acc: 4, use: "서버 GPU에서 정확도가 중요한 작업",
+      note: "이 제품에는 과합니다." },
+    { k: "x", name: "extra large", speed: 1, acc: 5, use: "서버 GPU에서 최고 정확도가 필요할 때",
+      note: "이 제품에는 과합니다." },
+  ];
+
+  const dots = (n) => Array.from({ length: 5 }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("");
+
+  const show = (sz) => {
+    tabs.querySelectorAll(".sizes__btn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.k === sz.k)));
+    body.classList.add("is-swapping");
+    setTimeout(() => {
+      body.innerHTML = `
+        <p class="sizes__name">yolo26${sz.k}<small>${sz.name}</small></p>
+        <p class="sizes__use">${sz.use}</p>
+        <div class="meter"><span>속도</span><span class="meter__dots">${dots(sz.speed)}</span></div>
+        <div class="meter meter--acc"><span>정확도</span><span class="meter__dots">${dots(sz.acc)}</span></div>
+        <p>${sz.note}</p>`;
+      body.classList.remove("is-swapping");
+    }, 140);
+  };
+
+  tabs.innerHTML = SIZES.map(
+    (sz) => `<button type="button" class="sizes__btn${sz.ours ? " is-ours" : ""}" data-k="${sz.k}" aria-pressed="false" aria-label="${sz.name}">${sz.k}</button>`
+  ).join("");
+  tabs.querySelectorAll(".sizes__btn").forEach((b) =>
+    b.addEventListener("click", () => show(SIZES.find((sz) => sz.k === b.dataset.k)))
+  );
+  show(SIZES[0]);
 })();
