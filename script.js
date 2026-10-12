@@ -274,47 +274,28 @@
   select(current);
 })();
 
-// ----- AI 모델: 크기 5단계 비교 -----
+// ----- AI 모델: 탭 -----
 (() => {
-  const tabs = document.getElementById("sizeTabs");
-  const body = document.getElementById("sizeBody");
-  if (!tabs || !body) return;
+  const tabs = [...document.querySelectorAll(".mtabs__btn")];
+  if (!tabs.length) return;
 
-  // 속도·정확도는 5단계 상대 비교 (실제 수치 아님)
-  const SIZES = [
-    { k: "n", name: "nano", speed: 5, acc: 1, use: "Raspberry Pi, 스마트폰처럼 GPU가 없거나 약한 소형 장치", ours: true,
-      note: "이 제품의 기본 모델입니다. 쓰레기가 크게 찍히고 클래스가 3개뿐이라 nano로도 충분할 것으로 봅니다." },
-    { k: "s", name: "small", speed: 4, acc: 2, use: "nano의 정확도가 부족한 소형 장치, 노트북 CPU",
-      note: "nano가 정확도 기준을 못 넘으면 비교할 후보입니다 (비교 실험 C)." },
-    { k: "m", name: "medium", speed: 3, acc: 3, use: "Jetson 같은 GPU 탑재 엣지 장치, 일반 PC GPU",
-      note: "정확도와 속도의 균형형입니다. 라즈베리파이 CPU에서는 2초 목표를 맞추기 어렵습니다." },
-    { k: "l", name: "large", speed: 2, acc: 4, use: "서버 GPU에서 정확도가 중요한 작업",
-      note: "이 제품에는 과합니다." },
-    { k: "x", name: "extra large", speed: 1, acc: 5, use: "서버 GPU에서 최고 정확도가 필요할 때",
-      note: "이 제품에는 과합니다." },
-  ];
-
-  const dots = (n) => Array.from({ length: 5 }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("");
-
-  const show = (sz) => {
-    tabs.querySelectorAll(".sizes__btn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.k === sz.k)));
-    body.classList.add("is-swapping");
-    setTimeout(() => {
-      body.innerHTML = `
-        <p class="sizes__name">yolo26${sz.k}<small>${sz.name}</small></p>
-        <p class="sizes__use">${sz.use}</p>
-        <div class="meter"><span>속도</span><span class="meter__dots">${dots(sz.speed)}</span></div>
-        <div class="meter meter--acc"><span>정확도</span><span class="meter__dots">${dots(sz.acc)}</span></div>
-        <p>${sz.note}</p>`;
-      body.classList.remove("is-swapping");
-    }, 140);
+  const open = (tab, focus = false) => {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.classList.toggle("is-active", on);
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+    if (focus) tab.focus();
   };
 
-  tabs.innerHTML = SIZES.map(
-    (sz) => `<button type="button" class="sizes__btn${sz.ours ? " is-ours" : ""}" data-k="${sz.k}" aria-pressed="false" aria-label="${sz.name}">${sz.k}</button>`
-  ).join("");
-  tabs.querySelectorAll(".sizes__btn").forEach((b) =>
-    b.addEventListener("click", () => show(SIZES.find((sz) => sz.k === b.dataset.k)))
-  );
-  show(SIZES[0]);
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => open(t));
+    t.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const next = (i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+      open(tabs[next], true);
+    });
+  });
 })();
