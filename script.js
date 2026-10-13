@@ -299,3 +299,104 @@
     });
   });
 })();
+
+// ----- AI 챗봇: Supabase Edge Function(chatbot)에 질문 보내기 -----
+(() => {
+  const ENDPOINT = "https://zjnpatbfcttszacxejvm.supabase.co/functions/v1/chatbot";
+  const toggle = document.getElementById("botToggle");
+  const panel = document.getElementById("botPanel");
+  if (!toggle || !panel) return;
+  const closeBtn = document.getElementById("botClose");
+  const log = document.getElementById("botLog");
+  const form = document.getElementById("botForm");
+  const input = document.getElementById("botInput");
+  const send = document.getElementById("botSend");
+  const chips = document.getElementById("botChips");
+  const history = [];   // 최근 대화 (서버에 맥락으로 보냄)
+  let busy = false;
+
+  const setOpen = (open) => {
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "챗봇 닫기" : "AI에게 물어보기");
+    if (open) input.focus();
+  };
+  toggle.addEventListener("click", () => setOpen(panel.hidden));
+  closeBtn.addEventListener("click", () => { setOpen(false); toggle.focus(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { setOpen(false); toggle.focus(); } });
+
+  // 답변의 간단한 마크다운(굵게, 목록)만 안전하게 바꿔서 보여줌
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const md = (text) => {
+    let html = "", inList = false;
+    for (const line of esc(text).split("\n")) {
+      const m = /^\s*(?:[*\-•]|\d+[.)])\s+(.*)$/.exec(line);
+      if (m) { if (!inList) { html += "<ul>"; inList = true; } html += `<li>${m[1]}</li>`; continue; }
+      if (inList) { html += "</ul>"; inList = false; }
+      if (line.trim()) html += `<p>${line}</p>`;
+    }
+    if (inList) html += "</ul>";
+    return html.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  };
+
+  const add = (cls, html) => {
+    const el = document.createElement("div");
+    el.className = `msg ${cls}`;
+    el.innerHTML = html;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+    return el;
+  };
+
+  const ask = async (question) => {
+    question = question.trim();
+    if (!question || busy) return;
+    busy = true;
+    send.disabled = true;
+    chips.hidden = true;
+    add("msg--user", `<p>${esc(question)}</p>`);
+    input.value = "";
+    input.style.height = "";
+    const typing = add("msg--typing msg--bot", "<i></i><i></i><i></i>");
+    typing.setAttribute("aria-label", "답변 작성 중");
+
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 60000);
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, history: history.slice(-6) }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      const data = await res.json().catch(() => ({}));
+      typing.remove();
+      if (!res.ok || !data.answer) throw new Error(data.error || "답변을 받지 못했어요.");
+
+      const src = (data.sources || []).length
+        ? `<details class="msg__src"><summary>참고 자료 ${data.sources.length}개</summary><ul>${data.sources.map((s) => `<li>${esc(s)}</li>`).join("")}</ul></details>`
+        : "";
+      add("msg--bot", md(data.answer) + src);
+      history.push({ role: "user", text: question }, { role: "model", text: data.answer });
+    } catch (err) {
+      typing.remove();
+      const msg = err.name === "AbortError" ? "답변이 너무 오래 걸려요. 잠시 뒤 다시 시도해 주세요." : err.message;
+      add("msg--bot msg--error", `<p>${esc(msg)}</p>`);
+    } finally {
+      busy = false;
+      send.disabled = false;
+      input.focus();
+    }
+  };
+
+  form.addEventListener("submit", (e) => { e.preventDefault(); ask(input.value); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(input.value); }
+  });
+  input.addEventListener("input", () => {   // 입력 길이에 맞춰 높이 자동 조절
+    input.style.height = "";
+    input.style.height = `${Math.min(input.scrollHeight, 110)}px`;
+  });
+  chips.querySelectorAll(".bot__chip").forEach((c) => c.addEventListener("click", () => ask(c.textContent)));
+})();

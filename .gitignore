@@ -1,1 +1,6 @@
 test/
+.mcp.json
+db.html
+db2.html
+sample_rules.csv
+Supabase_AI_*
