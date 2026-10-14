@@ -274,11 +274,9 @@
   select(current);
 })();
 
-// ----- AI 모델: 탭 -----
-(() => {
-  const tabs = [...document.querySelectorAll(".mtabs__btn")];
-  if (!tabs.length) return;
-
+// ----- 탭 (AI 모델 · 하드웨어): 탭 묶음마다 따로 동작 -----
+document.querySelectorAll(".mtabs").forEach((group) => {
+  const tabs = [...group.querySelectorAll(".mtabs__btn")];
   const open = (tab, focus = false) => {
     tabs.forEach((t) => {
       const on = t === tab;
@@ -289,7 +287,6 @@
     });
     if (focus) tab.focus();
   };
-
   tabs.forEach((t, i) => {
     t.addEventListener("click", () => open(t));
     t.addEventListener("keydown", (e) => {
@@ -298,7 +295,7 @@
       open(tabs[next], true);
     });
   });
-})();
+});
 
 // ----- AI 챗봇: Supabase Edge Function(chatbot)에 질문 보내기 -----
 (() => {
