@@ -731,6 +731,18 @@ strong { font-weight: 700; color: var(--ink); }
 
 
 
+
+/* 탭: 추론 엔진 */
+.cmp.engine { margin-top: 1.25rem; }
+.cmp.engine td:nth-child(3), .cmp.engine td:nth-child(4), .cmp.engine td:nth-child(5) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+#model .engine-cond { margin: .6rem 0 0; font-size: 12px; color: var(--muted); }
+.engine-why { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
+.engine-why li { padding: .9rem 1rem; border-radius: var(--r-md); background: var(--trough); display: grid; gap: .3rem; align-content: start; }
+.engine-why b { font-size: 14px; color: var(--ink); }
+.engine-why span { font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
+#model .engine-next { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin: 1rem 0 0; font-size: 13.5px; color: var(--ink-2); }
+@media (max-width: 900px) { .engine-why { grid-template-columns: 1fr; } }
+
 /* ---------- 하드웨어 ---------- */
 .hw-rules { list-style: none; margin: 0 0 1.5rem; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
 .hw-rules li { padding: .95rem 1.1rem; border-radius: var(--r-md); background: var(--primary-soft); border-left: 4px solid var(--primary); display: grid; gap: .2rem; }

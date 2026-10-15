@@ -304,6 +304,7 @@
           <div class="mtabs__bar" role="tablist" aria-label="AI 모델 설명">
             <button class="mtabs__btn is-active" type="button" role="tab" id="mt-pick" aria-controls="mp-pick" aria-selected="true">모델 선택</button>
             <button class="mtabs__btn" type="button" role="tab" id="mt-train" aria-controls="mp-train" aria-selected="false" tabindex="-1">학습 · 검증</button>
+            <button class="mtabs__btn" type="button" role="tab" id="mt-engine" aria-controls="mp-engine" aria-selected="false" tabindex="-1">추론 엔진</button>
             <button class="mtabs__btn" type="button" role="tab" id="mt-eval" aria-controls="mp-eval" aria-selected="false" tabindex="-1">결과표 읽기</button>
             <button class="mtabs__btn" type="button" role="tab" id="mt-cmp" aria-controls="mp-cmp" aria-selected="false" tabindex="-1">다른 모델과 비교</button>
           </div>
@@ -369,6 +370,32 @@
               <li><b>10MB<small>이하</small></b><span>모델 파일 크기</span></li>
             </ul>
             <pre class="train__code"><code>yolo detect train model=yolo26n.pt data=data.yaml imgsz=320 epochs=100 patience=20</code></pre>
+          </div>
+
+          <!-- 탭: 추론 엔진 -->
+          <div class="mtabs__panel" role="tabpanel" id="mp-engine" aria-labelledby="mt-engine" hidden>
+            <p class="panel-lead">
+              <b>라즈베리파이 4(ARM)에는 NCNN을 씁니다.</b>
+              학습한 모델을 장치에서 빠르게 돌려주는 프로그램이 추론 엔진입니다. 같은 YOLO26n도 엔진에 따라 속도·용량·정확도가 달라집니다.
+            </p>
+            <div class="cmp__scroll">
+              <table class="cmp engine">
+                <thead><tr><th>엔진</th><th>만든 곳 · 특기</th><th>용량</th><th>추론 p50</th><th>mAP50</th><th>우리 제품에서</th></tr></thead>
+                <tbody>
+                  <tr class="is-ours"><th scope="row">NCNN</th><td>Tencent · ARM·모바일 전용</td><td>9.76MB</td><td>87.7ms</td><td>62.87%</td><td><span class="role role--main">선택</span> ARM 최적화, 가장 작음</td></tr>
+                  <tr><th scope="row">ONNX Runtime</th><td>Microsoft · 어디서나 무난</td><td>9.94MB</td><td>58.7ms</td><td>63.77%</td><td><span class="role role--opt">예비</span> 라즈베리파이 실측에서 더 빠르면 교체</td></tr>
+                  <tr><th scope="row">OpenVINO</th><td>Intel · 인텔 CPU·GPU 최적화</td><td>10.13MB</td><td>67.7ms</td><td>63.77%</td><td><span class="role role--no">제외</span> 장치가 인텔이 아닌 ARM</td></tr>
+                  <tr><th scope="row">LiteRT (TFLite)</th><td>Google · 모바일, INT8 양자화</td><td>10.27MB</td><td>79.7ms</td><td>63.77%</td><td><span class="role role--later">제외</span> 변환 단계가 많고 장점 약함</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="engine-cond">측정 조건: 인텔 Core Ultra 5 PC · 4스레드 · 640×640 · FP32 · COCO 100장 × 3회 (수업 비교 결과)</p>
+            <ul class="engine-why">
+              <li><b>PC 순위 ≠ 우리 장치 순위</b><span>인텔 PC에선 ONNX Runtime이 가장 빨랐지만, NCNN은 ARM용 엔진이라 인텔에선 실력이 안 나옵니다. 우리 장치는 ARM 라즈베리파이입니다.</span></li>
+              <li><b>가장 작고 가벼움</b><span>9.76MB로 10MB 목표를 만족하고, 필요한 라이브러리가 적어 라즈베리파이 부담이 작습니다.</span></li>
+              <li><b>정확도 차이는 출력 방식 때문</b><span>NCNN은 NMS 없는 출력을 못 써서 겹친 박스 정리(NMS)를 따로 합니다. 우리 3종 데이터로 하락 2%p 이내인지 확인합니다.</span></li>
+            </ul>
+            <p class="engine-next"><span class="chip chip--amber">다음 단계</span> 라즈베리파이 4에서 320×320으로 네 엔진을 다시 측정해 최종 확정합니다.</p>
           </div>
 
           <!-- 탭 3: 결과표 읽기 -->
