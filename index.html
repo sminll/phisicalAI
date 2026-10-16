@@ -480,6 +480,8 @@
             <button class="mtabs__btn is-active" type="button" role="tab" id="ht-map" aria-controls="hp-map" aria-selected="true">부품 관계도</button>
             <button class="mtabs__btn" type="button" role="tab" id="ht-mcu" aria-controls="hp-mcu" aria-selected="false" tabindex="-1">MCU · 배치</button>
             <button class="mtabs__btn" type="button" role="tab" id="ht-spec" aria-controls="hp-spec" aria-selected="false" tabindex="-1">부품 사양</button>
+            <button class="mtabs__btn" type="button" role="tab" id="ht-pick" aria-controls="hp-pick" aria-selected="false" tabindex="-1">MCU · SBC 선택</button>
+            <button class="mtabs__btn" type="button" role="tab" id="ht-sw" aria-controls="hp-sw" aria-selected="false" tabindex="-1">SBC 내부 구조</button>
           </div>
 
           <!-- 탭 1: 관계도 -->
@@ -537,6 +539,58 @@
             </ul>
             <p class="hw-note">전압·전류는 데이터시트 기준 일반값이며, 웹캠·조명은 제품마다 다릅니다. 모든 GND는 공통으로 연결합니다.</p>
           </div>
+
+          <!-- 탭 4: MCU · SBC 선택 -->
+          <div class="mtabs__panel" role="tabpanel" id="hp-pick" aria-labelledby="ht-pick" hidden>
+            <p class="panel-lead"><b>MCU는 Arduino Uno R3, SBC는 Raspberry Pi 4 (4GB)를 씁니다.</b> 우리 부품은 모두 5V이고, 사람이 다가올 때만 사진 몇 장을 판별해서 계산량이 크지 않습니다.</p>
+            <div class="pick2">
+              <div class="cmp__scroll">
+                <table class="cmp pickt">
+                  <caption>MCU 후보 · 센서 · 서보 · LED 제어</caption>
+                  <thead><tr><th>보드</th><th>신호</th><th>우리 제품에서</th></tr></thead>
+                  <tbody>
+                    <tr class="is-ours"><th scope="row">Arduino Uno R3</th><td>5V</td><td><span class="role role--main">선택</span> 5V 부품 바로 연결, 핀·메모리 충분</td></tr>
+                    <tr><th scope="row">Arduino Uno R4 Minima</th><td>5V</td><td><span class="role role--opt">예비</span> 메모리 부족 시 보드만 교체</td></tr>
+                    <tr><th scope="row">ESP32-S3</th><td>3.3V</td><td><span class="role role--no">제외</span> 레벨 변환 필요, Wi-Fi는 Pi에 있음</td></tr>
+                    <tr><th scope="row">Raspberry Pi Pico 2</th><td>3.3V</td><td><span class="role role--no">제외</span> 5V 부품과 섞어 쓰기 불편</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="cmp__scroll">
+                <table class="cmp pickt">
+                  <caption>SBC 후보 · AI 추론</caption>
+                  <thead><tr><th>보드</th><th>전원</th><th>우리 제품에서</th></tr></thead>
+                  <tbody>
+                    <tr class="is-ours"><th scope="row">Raspberry Pi 4 (4GB)</th><td>5V 3A</td><td><span class="role role--main">선택</span> 2초 목표에 충분, 가격·전력 유리</td></tr>
+                    <tr><th scope="row">Raspberry Pi 5 (4GB)</th><td>5V 5A</td><td><span class="role role--opt">예비</span> 실측 p95가 1초를 넘으면 교체</td></tr>
+                    <tr><th scope="row">Pi 5 + AI HAT+</th><td>5V 5A</td><td><span class="role role--no">제외</span> 사진 몇 장 판별에는 과함</td></tr>
+                    <tr><th scope="row">Jetson Orin Nano</th><td>7~25W</td><td><span class="role role--no">제외</span> 가격·전력이 몇 배</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 탭 5: SBC 내부 구조 -->
+          <div class="mtabs__panel" role="tabpanel" id="hp-sw" aria-labelledby="ht-sw" hidden>
+            <p class="panel-lead"><b>Pi 안의 코드를 도커 컨테이너 5개로 나눴습니다.</b> 컨테이너끼리는 MQTT 브로커로만 메시지를 주고받고, AI가 메모리 초과로 죽어도 나머지는 계속 동작합니다.</p>
+            <figure class="diagram">
+              <div class="diagram__scroll">
+                <img src="report/sbc_software_diagram.svg" alt="SBC 내부 소프트웨어 구조: Raspberry Pi 4 안에 camera-collector, arduino-bridge(장치 접근, 항상 재시작), Mosquitto broker(시스템의 척추), ai-inference, log-uploader(권한 없음, 실패 시 재시작) 컨테이너가 MQTT로 연결된다." loading="lazy" width="1160" height="900">
+              </div>
+              <figcaption>
+                <span>점선 = MQTT 메시지 · 실선 = 장치 연결</span>
+                <a href="report/sbc_software_diagram.svg" target="_blank" rel="noopener">크게 보기 ↗</a>
+              </figcaption>
+            </figure>
+            <ul class="hw-power sw-zones">
+              <li><b>장치 접근 구역</b> ① 카메라 · ② Arduino 브리지<span>필요한 장치 하나만 연결 · 항상 재시작</span></li>
+              <li><b>시스템의 척추</b> ③ MQTT 브로커<span>장치 안에서만 사용 · 항상 재시작</span></li>
+              <li><b>죽어도 되는 구역</b> ④ AI 추론 · ⑤ 로그 전송<span>권한 없음 · 메모리 한도 · 실패 시 재시작</span></li>
+            </ul>
+            <p class="hw-note">이중 안전: Pi 쪽이 멈춰 통신이 3초 끊기면 Arduino가 스스로 뚜껑을 닫습니다. 뚜껑 안전은 MCU가 책임집니다.</p>
+          </div>
+
         </div>
       </div>
     </section>

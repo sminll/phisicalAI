@@ -780,6 +780,18 @@ strong { font-weight: 700; color: var(--ink); }
   .hw-rules, .hw-why, .hw-power { grid-template-columns: 1fr; }
 }
 
+
+/* 하드웨어 탭: MCU · SBC 선택 */
+.pick2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.25rem; }
+.pick2 > * { min-width: 0; }
+.cmp.pickt { min-width: 440px; }
+.cmp.pickt caption { text-align: left; font-size: 14px; font-weight: 700; padding-bottom: .5rem; color: var(--ink); }
+.cmp.pickt td:nth-child(2) { white-space: nowrap; }
+#hw .panel-lead { margin: 0; font-size: 14.5px; line-height: 1.75; color: var(--ink-2); }
+#hw .panel-lead b { color: var(--ink); }
+.sw-zones { margin-top: 1rem; }
+@media (max-width: 1080px) { .pick2 { grid-template-columns: 1fr; } }
+
 /* ---------- AI 챗봇 ---------- */
 .to-top { bottom: calc(1.5rem + 68px); }
 .bot__fab {
